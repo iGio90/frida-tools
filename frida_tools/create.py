@@ -20,6 +20,27 @@ def main():
     agent_template = """
     """
 
+    babel_template = """
+        {
+          "presets": [
+            [
+              "@babel/preset-env",
+              {
+                "loose": true
+              }
+            ]
+          ],
+          "plugins": [
+            [
+              "@babel/plugin-transform-runtime",
+              {
+                "corejs": 2
+              }
+            ]
+          ]
+        }    
+    """
+
     package_template = {
         "name": "",
         "version": "1.0.0",
@@ -58,27 +79,6 @@ def main():
         ]
     }
 
-    babel_template = """
-        {
-          "presets": [
-            [
-              "@babel/preset-env",
-              {
-                "loose": true
-              }
-            ]
-          ],
-          "plugins": [
-            [
-              "@babel/plugin-transform-runtime",
-              {
-                "corejs": 2
-              }
-            ]
-          ]
-        }    
-        """
-
     current_path = os.getcwd()
     path = input("project path (%s): " % current_path)
     if len(path) == 0:
@@ -93,22 +93,75 @@ def main():
         project_name = current_project_name
     package_template["name"] = project_name
 
-    if not path.endswith(os.sep):
-        path += os.sep
-    with open(path + "package.json", 'w') as f:
+    with open(os.path.join(path, "package.json"), 'w') as f:
         f.write(json.dumps(package_template, indent=4))
-    with open(path + "tsconfig.json", 'w') as f:
+    with open(os.path.join(path, "tsconfig.json"), 'w') as f:
         f.write(json.dumps(tsconfig_template, indent=4))
-    with open(path + ".babelrc", 'w') as f:
+    with open(os.path.join(path, ".babelrc"), 'w') as f:
         f.write(babel_template)
-    with open(path + "agent.ts", 'w') as f:
+    with open(os.path.join(path, "agent.ts"), 'w') as f:
         f.write(agent_template)
 
-    os.system('cd %s && npm install' % path)
+    create_injector = input("do you want to create a base py injector? (Y): ")
+    if create_injector.lower() == 'y':
+        device_type = input("what's your target device? U:usb L:local R:remote (U): ").lower()
+        if device_type == 'l':
+            # todo
+            pass
+        elif device_type == 'r':
+            # todo
+            pass
+        else:
+            # fallback to usb in any case
+            device_type = 'u'
+        package = input("what's your target package name? ")
+        with open(os.path.join(path, "injector.py"), 'w') as f:
+            f.write(get_injector_template(device_type, package))
+
+    os.system("cd %s && npm install" % path)
     print('')
-    print('project create at %s')
-    print('run `npm run watch` in the project path to automatically build the agent while you code it')
+    print("project create at %s" % path)
+    print("run `npm run watch` in the project path to automatically build the agent while you code it")
     exit(0)
+
+
+def get_injector_template(device_type, package):
+    if device_type == 'l':
+        device_token = "get_local_device"
+    elif device_type == 'r':
+        # todo here add properties
+        device_token = "get_remote_device"
+    else:
+        # fallback to usb
+        device_token = "get_usb_device"
+    return """
+        import frida
+        import os
+        import sys
+        
+        
+        def on_message(message, payload):
+            if 'payload' in message:
+                message = message['payload']
+                print(message)
+            else:
+                print(message)
+        
+        
+        if not os.path.exists('_agent.js'):
+            print('use `npm install` to build the agent')
+            exit(0)
+        
+        d = frida.%s()
+        pid = d.spawn('%s')
+        session = d.attach(pid)
+        script = session.create_script(open('_agent.js', 'r').read())
+        script.on('message', on_message)
+        script.load()
+        d.resume(pid)
+        sys.stdin.read()
+
+    """ % (device_token, package)
 
 
 if __name__ == '__main__':
