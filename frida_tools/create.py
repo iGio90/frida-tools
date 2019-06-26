@@ -80,31 +80,28 @@ def main():
         """
 
     current_path = os.getcwd()
-    path = input('project path (%s): ' % current_path)
+    path = input("project path (%s): " % current_path)
     if len(path) == 0:
         path = current_path
     if not os.path.exists(path):
-        print('the specified path does not exists')
+        print("the specified path does not exists")
         exit(1)
 
-    separator = '/'
-    if os.name == 'nt':
-        separator = '\\'
-    current_project_name = current_path.split(separator)[-1]
-    project_name = input('project name (%s): ' % current_project_name)
+    current_project_name = current_path.split(os.sep)[-1]
+    project_name = input("project name (%s): " % current_project_name)
     if len(project_name) == 0:
         project_name = current_project_name
-    package_template['name'] = project_name
+    package_template["name"] = project_name
 
-    if not path.endswith(separator):
-        path += separator
-    with open(path + 'package.json', 'w') as f:
+    if not path.endswith(os.sep):
+        path += os.sep
+    with open(path + "package.json", 'w') as f:
         f.write(json.dumps(package_template, indent=4))
-    with open(path + 'tsconfig.json', 'w') as f:
+    with open(path + "tsconfig.json", 'w') as f:
         f.write(json.dumps(tsconfig_template, indent=4))
-    with open(path + '.babelrc', 'w') as f:
+    with open(path + ".babelrc", 'w') as f:
         f.write(babel_template)
-    with open(path + 'agent.ts', 'w') as f:
+    with open(path + "agent.ts", 'w') as f:
         f.write(agent_template)
 
     os.system('cd %s && npm install' % path)
