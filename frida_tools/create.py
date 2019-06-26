@@ -43,7 +43,7 @@ def main():
         }
     }
 
-    package_lock_template = {
+    tsconfig_template = {
         "compilerOptions": {
             "target": "esnext",
             "lib": ["esnext"],
@@ -95,14 +95,13 @@ def main():
     if len(project_name) == 0:
         project_name = current_project_name
     package_template['name'] = project_name
-    package_lock_template['name'] = project_name
 
     if not path.endswith(separator):
         path += separator
     with open(path + 'package.json', 'w') as f:
         f.write(json.dumps(package_template, indent=4))
     with open(path + 'tsconfig.json', 'w') as f:
-        f.write(json.dumps(package_lock_template, indent=4))
+        f.write(json.dumps(tsconfig_template, indent=4))
     with open(path + '.babelrc', 'w') as f:
         f.write(babel_template)
     with open(path + 'agent.ts', 'w') as f:
