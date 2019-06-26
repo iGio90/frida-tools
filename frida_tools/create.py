@@ -17,6 +17,8 @@ def main():
     import json
     import os
 
+    from io import open
+
     agent_template = """
     """
 
@@ -93,13 +95,13 @@ def main():
         project_name = current_project_name
     package_template["name"] = project_name
 
-    with open(os.path.join(path, "package.json"), 'w') as f:
+    with open(os.path.join(path, "package.json"), 'w', encoding='utf-8') as f:
         f.write(json.dumps(package_template, indent=4))
-    with open(os.path.join(path, "tsconfig.json"), 'w') as f:
+    with open(os.path.join(path, "tsconfig.json"), 'w', encoding='utf-8') as f:
         f.write(json.dumps(tsconfig_template, indent=4))
-    with open(os.path.join(path, ".babelrc"), 'w') as f:
+    with open(os.path.join(path, ".babelrc"), 'w', encoding='utf-8') as f:
         f.write(babel_template)
-    with open(os.path.join(path, "agent.ts"), 'w') as f:
+    with open(os.path.join(path, "agent.ts"), 'w', encoding='utf-8') as f:
         f.write(agent_template)
 
     create_injector = input("do you want to create a base py injector? (Y): ")
@@ -115,7 +117,7 @@ def main():
             # fallback to usb in any case
             device_type = 'u'
         package = input("what's your target package name? ")
-        with open(os.path.join(path, "injector.py"), 'w') as f:
+        with open(os.path.join(path, "injector.py"), 'w', encoding='utf-8') as f:
             f.write(get_injector_template(device_type, package))
 
     os.system("cd %s && npm install" % path)
@@ -134,34 +136,32 @@ def get_injector_template(device_type, package):
     else:
         # fallback to usb
         device_token = "get_usb_device"
-    return """
-        import frida
-        import os
-        import sys
-        
-        
-        def on_message(message, payload):
-            if 'payload' in message:
-                message = message['payload']
-                print(message)
-            else:
-                print(message)
-        
-        
-        if not os.path.exists('_agent.js'):
-            print('use `npm install` to build the agent')
-            exit(0)
-        
-        d = frida.%s()
-        pid = d.spawn('%s')
-        session = d.attach(pid)
-        script = session.create_script(open('_agent.js', 'r').read())
-        script.on('message', on_message)
-        script.load()
-        d.resume(pid)
-        sys.stdin.read()
+    return """import frida
+import os
+import sys
 
-    """ % (device_token, package)
+
+def on_message(message, payload):
+    if 'payload' in message:
+        message = message['payload']
+        print(message)
+    else:
+        print(message)
+
+
+if not os.path.exists('_agent.js'):
+    print('use `npm install` to build the agent')
+    exit(0)
+
+d = frida.%s()
+pid = d.spawn('%s')
+session = d.attach(pid)
+script = session.create_script(open('_agent.js', 'r').read())
+script.on('message', on_message)
+script.load()
+d.resume(pid)
+sys.stdin.read()
+""" % (device_token, package)
 
 
 if __name__ == '__main__':
