@@ -103,7 +103,7 @@ def main():
         f.write(agent_template)
 
     create_injector = input("do you want to create a base py injector? (Y): ")
-    if create_injector.lower() == 'y':
+    if len(create_injector) == 0 or create_injector.lower() == 'y':
         device_type = input("what's your target device? U:usb L:local R:remote (U): ").lower()
         if device_type == 'l':
             # todo
