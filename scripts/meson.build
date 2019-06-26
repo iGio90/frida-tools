@@ -5,6 +5,7 @@ scripts = [
   'frida-ls-devices',
   'frida-ps',
   'frida-trace',
+  'frida-create',
 ]
 
 cdata = configuration_data()
