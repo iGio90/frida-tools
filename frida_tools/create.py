@@ -6,30 +6,30 @@ import socket
 
 
 def main():
+    from frida_tools.application import ConsoleApplication
     from io import open
-
     import json
 
     agent_template = """"""
 
     babel_template = """{
-  "presets": [
-    [
-      "@babel/preset-env",
-      {
-        "loose": true
-      }
-    ]
-  ],
-  "plugins": [
-    [
-      "@babel/plugin-transform-runtime",
-      {
-        "corejs": 2
-      }
-    ]
-  ]
-}"""
+      "presets": [
+        [
+          "@babel/preset-env",
+          {
+            "loose": true
+          }
+        ]
+      ],
+      "plugins": [
+        [
+          "@babel/plugin-transform-runtime",
+          {
+            "corejs": 2
+          }
+        ]
+      ]
+    }"""
 
     package_template = {
         "name": "",
@@ -69,75 +69,82 @@ def main():
         ]
     }
 
-    current_path = os.getcwd()
-    path = input("project path (%s): " % current_path)
-    if len(path) == 0:
-        path = current_path
-    if not os.path.exists(path):
-        print("the specified path does not exists")
-        exit(1)
+    class CreateApplication(ConsoleApplication):
+        def _start(self):
+            current_path = os.getcwd()
+            path = input("project path (%s): " % current_path)
+            if len(path) == 0:
+                path = current_path
+            if not os.path.exists(path):
+                print("the specified path does not exists")
+                exit(1)
 
-    current_project_name = current_path.split(os.sep)[-1]
-    project_name = input("project name (%s): " % current_project_name)
-    if len(project_name) == 0:
-        project_name = current_project_name
-    package_template["name"] = project_name
+            current_project_name = current_path.split(os.sep)[-1]
+            project_name = input("project name (%s): " % current_project_name)
+            if len(project_name) == 0:
+                project_name = current_project_name
+            package_template["name"] = project_name
 
-    with open(os.path.join(path, "package.json"), 'w', encoding='utf-8') as f:
-        f.write(json.dumps(package_template, indent=4))
-    with open(os.path.join(path, "tsconfig.json"), 'w', encoding='utf-8') as f:
-        f.write(json.dumps(tsconfig_template, indent=4))
-    with open(os.path.join(path, ".babelrc"), 'w', encoding='utf-8') as f:
-        f.write(babel_template)
+            with open(os.path.join(path, "package.json"), 'w', encoding='utf-8') as f:
+                f.write(json.dumps(package_template, indent=4))
+            with open(os.path.join(path, "tsconfig.json"), 'w', encoding='utf-8') as f:
+                f.write(json.dumps(tsconfig_template, indent=4))
+            with open(os.path.join(path, ".babelrc"), 'w', encoding='utf-8') as f:
+                f.write(babel_template)
 
-    os.mkdir(os.path.join(path, 'agent'))
-    with open(os.path.join(path, "agent/agent.ts"), 'w', encoding='utf-8') as f:
-        f.write(agent_template)
+            agent_path = os.path.join(path, 'agent')
+            if not os.path.exists(agent_path):
+                os.mkdir(agent_path)
+            with open(os.path.join(agent_path, "agent.ts"), 'w', encoding='utf-8') as f:
+                f.write(agent_template)
 
-    create_injector = input("do you want to create a base py injector? (Y): ")
-    if len(create_injector) == 0 or create_injector.lower() == 'y':
-        device_type = input("what's your target device? U:usb L:local R:remote (U): ").lower()
-        if device_type == 'l':
-            # todo
-            pass
-        elif device_type == 'r':
-            # todo
-            pass
-        else:
-            # fallback to usb in any case
-            device_type = 'u'
-        package = input("what's your target package name? ")
-        with open(os.path.join(path, "injector.py"), 'w', encoding='utf-8') as f:
-            f.write(get_injector_template(device_type, package))
+            create_injector = input("do you want to create a base py injector? (Y): ")
+            if len(create_injector) == 0 or create_injector.lower() == 'y':
+                device_type = input("what's your target device? U:usb L:local R:remote (U): ").lower()
+                if device_type == 'l':
+                    # todo
+                    pass
+                elif device_type == 'r':
+                    # todo
+                    pass
+                else:
+                    # fallback to usb in any case
+                    device_type = 'u'
+                package = input("what's your target package name? ")
+                with open(os.path.join(path, "injector.py"), 'w', encoding='utf-8') as f:
+                    f.write(get_injector_template(device_type, package))
 
-    os.system("cd %s && npm install" % path)
+            os.system("cd %s && npm install" % path)
 
-    if is_connected():
-        modules = ModulesList()
-        print("now you can pick your weapons. type h to print help or q to continue")
-        while True:
-            cmd = input('> ')
-            if cmd == 'q':
-                break
+            if is_connected():
+                modules = ModulesList()
+                print("now you can pick your weapons. type h to print help or q to continue")
+                while True:
+                    cmd = input('> ')
+                    if cmd == 'q':
+                        break
 
-            cmd = cmd.split(' ')
-            args = cmd[1:]
-            cmd = cmd[0]
-            if cmd == 'h' or cmd == 'help':
-                print('a|add {module-name}')
-                print('i|info {module-name}')
-                print('l|list [filter]')
-            elif cmd == 'l' or cmd == 'list':
-                modules.print(args)
-            elif cmd == 'a' or cmd == 'add':
-                modules.install(args)
-            elif cmd == 'i' or cmd == 'info':
-                modules.print_info(args)
+                    cmd = cmd.split(' ')
+                    args = cmd[1:]
+                    cmd = cmd[0]
+                    if cmd == 'h' or cmd == 'help':
+                        print('a|add {module-name}')
+                        print('i|info {module-name}')
+                        print('l|list [filter]')
+                    elif cmd == 'l' or cmd == 'list':
+                        modules.print(args)
+                    elif cmd == 'a' or cmd == 'add':
+                        modules.install(args)
+                    elif cmd == 'i' or cmd == 'info':
+                        modules.print_info(args)
 
-    print('')
-    print("project create at %s" % path)
-    print("run `npm run watch` in the project path to automatically build the agent while you code it")
-    exit(0)
+            print('')
+            print("project create at %s" % path)
+            print("run `npm run watch` in the project path to automatically build the agent while you code it")
+            exit(0)
+
+    app = CreateApplication()
+    app.run()
 
 
 def get_injector_template(device_type, package):
@@ -163,7 +170,7 @@ def on_message(message, payload):
 
 
 if not os.path.exists('_agent.js'):
-    print('use `npm install` to build the agent')
+    print('use `npm run build` to build the agent')
     exit(0)
 
 d = frida.%s()
