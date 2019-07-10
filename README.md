@@ -15,3 +15,9 @@ $ frida-create
 
 $ frida-modules
 ```
+
+the list of modules available is pulled from:
+
+https://github.com/iGio90/frida-create-modules
+
+Don't forget to add yours!
