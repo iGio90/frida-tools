@@ -6,13 +6,8 @@ import socket
 
 
 def main():
-    from frida_tools.application import ConsoleApplication
-
-    class ModulesApplication(ConsoleApplication):
-        def _usage(self):
-            return "usage: %prog"
-
-        def _start(self):
+    class ModulesApplication:
+        def __init__(self):
             if is_connected():
                 modules = ModulesList()
                 print("type h (help) to print help or q to continue")
@@ -38,8 +33,7 @@ def main():
             print('')
             exit(0)
 
-    app = ModulesApplication()
-    app.run()
+    ModulesApplication()
 
 
 def is_connected():

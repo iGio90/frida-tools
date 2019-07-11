@@ -2,11 +2,9 @@
 from __future__ import print_function
 
 import os
-import socket
 
 
 def main():
-    from frida_tools.application import ConsoleApplication
     from io import open
     import json
 
@@ -69,11 +67,8 @@ def main():
         ]
     }
 
-    class CreateApplication(ConsoleApplication):
-        def _usage(self):
-            return "usage: %prog"
-
-        def _start(self):
+    class CreateApplication:
+        def __init__(self):
             current_path = os.getcwd()
             path = input("project path (%s): " % current_path)
             if len(path) == 0:
@@ -113,6 +108,7 @@ def main():
                 else:
                     # fallback to usb in any case
                     device_type = 'u'
+
                 package = input("what's your target package name? ")
                 with open(os.path.join(path, "injector.py"), 'w', encoding='utf-8') as f:
                     f.write(get_injector_template(device_type, package))
@@ -124,8 +120,7 @@ def main():
             print("run `npm run watch` in the project path to automatically build the agent while you code it")
             exit(0)
 
-    app = CreateApplication()
-    app.run()
+    CreateApplication()
 
 
 def get_injector_template(device_type, package):
